@@ -789,6 +789,18 @@ class Level implements ChunkManager, Metadatable{
 				unset($this->updateEntities[$id]);
 			}
 		}
+		
+		//Remove entities which can no longer be seen
+		//Love from @dktapps, this fixes an age-old memory leak
+		foreach($this->entities as $id => $entity){
+			if(!$entity instanceof Player){
+				if($entity->closed or count($entity->getViewers()) === 0){
+					$entity->chunk->removeEntity($entity);
+					$this->removeEntity($this->entities[$id]);
+				}
+			}
+		}
+		
 		Timings::$tickEntityTimer->stopTiming();
 		$this->timings->entityTick->stopTiming();
 
