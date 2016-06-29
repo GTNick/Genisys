@@ -89,7 +89,7 @@ class EnchantmentLevelTable{
 				new Range(34, 54),
 				new Range(45, 65)
 			],
-			Enchantment::TYPE_VIBRANT => [
+			Enchantment::TYPE_WEAPON_VIBRANT => [
 				new Range(1, 21),
 				new Range(12, 32),
 				new Range(23, 43),
@@ -226,7 +226,8 @@ class EnchantmentLevelTable{
 			$enchantmentIds[] = Enchantment::TYPE_WEAPON_ARTHROPODS; 
 			$enchantmentIds[] = Enchantment::TYPE_WEAPON_KNOCKBACK; 
 			$enchantmentIds[] = Enchantment::TYPE_WEAPON_FIRE_ASPECT; 
-			$enchantmentIds[] = Enchantment::TYPE_WEAPON_LOOTING; 
+			$enchantmentIds[] = Enchantment::TYPE_WEAPON_LOOTING;
+			$enchantmentIds[] = Enchantment::TYPE_WEAPON_VIBRANT; 
 
 		}elseif($item->isTool()){
 			$enchantmentIds[] = Enchantment::TYPE_MINING_EFFICIENCY; 
