@@ -15,7 +15,7 @@
  * (at your option) any later version.
  *
  * @author iTX Technologies
- * @link https://mcper.cn
+ * @link https://itxtech.org
  *
  */
 
@@ -88,6 +88,13 @@ class EnchantmentLevelTable{
 				new Range(23, 43),
 				new Range(34, 54),
 				new Range(45, 65)
+			],
+			Enchantment::TYPE_VIBRANT => [
+				new Range(1, 21),
+				new Range(12, 32),
+				new Range(23, 43),
+				new Range(34, 54),
+				new Range(5, 55)
 			],
 
 			Enchantment::TYPE_WEAPON_SMITE => [
@@ -168,6 +175,7 @@ class EnchantmentLevelTable{
 				new Range(24, 74),
 				new Range(33, 83)
 			],
+			
 
 			//Fishing
 			Enchantment::TYPE_FISHING_FORTUNE => [
