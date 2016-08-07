@@ -101,7 +101,6 @@ class CraftingManager{
 				}
 			}
 		}else{
-			//$this->registerStonecutter();
 			$this->registerFurnace();
 			$this->registerDyes();
 			$this->registerIngots();
@@ -139,10 +138,6 @@ class CraftingManager{
 				"X ",
 				"X "
 			))->setIngredient("X", Item::get(Item::WOODEN_PLANK, null)));
-			$this->registerRecipe((new ShapedRecipe(Item::get(Item::STONECUTTER, 0, 1),
-				"XX",
-				"XX"
-			))->setIngredient("X", Item::get(Item::COBBLESTONE)));
 			$this->registerRecipe((new ShapedRecipe(Item::get(Item::WOODEN_PLANK, Planks::OAK, 4),
 				"X"
 			))->setIngredient("X", Item::get(Item::WOOD, Wood::OAK, 1)));
@@ -266,11 +261,6 @@ class CraftingManager{
 				"SSS",
 				"S S"
 			))->setIngredient("S", Item::get(Item::STICK, 0, 7)));
-			$this->registerRecipe((new BigShapedRecipe(Item::get(Item::NETHER_REACTOR, 0, 1),
-				"IDI",
-				"IDI",
-				"IDI"
-			))->setIngredient("D", Item::get(Item::DIAMOND, 0, 3))->setIngredient("I", Item::get(Item::IRON_INGOT, 0, 6)));
 			$this->registerRecipe((new BigShapedRecipe(Item::get(Item::TRAPDOOR, 0, 2),
 				"PPP",
 				"PPP",
@@ -563,7 +553,8 @@ class CraftingManager{
 
 			$this->registerRecipe((new BigShapedRecipe(Item::get(Item::STONE_BRICK, 0, 4),
 				"XX ",
-				"XX "
+				"XX ",
+				"   "
 			))->setIngredient("X", Item::get(Item::STONE, '', 4)));
 
 			$this->registerRecipe((new BigShapedRecipe(Item::get(Item::QUARTZ_BLOCK, 0, 1),
@@ -749,12 +740,6 @@ class CraftingManager{
 	}
 
 	protected function registerBrewingStand(){
-		/*$this->registerBrewingRecipe(new BrewingRecipe(Item::get(Item::POTION, Potion::AWKWARD, 1), Item::get(Item::NETHER_WART, 0, 1), Item::get(Item::POTION, Potion::WATER_BOTTLE, 1))); //Akward
-		// Potion
-		$this->registerBrewingRecipe(new BrewingRecipe(Item::get(Item::POTION, Potion::SWIFTNESS, 1), Item::get(Item::SUGAR, 0, 1), Item::get(Item::POTION, Potion::AWKWARD, 1))); //Swiftness
-		$this->registerBrewingRecipe(new BrewingRecipe(Item::get(Item::POTION, Potion::SWIFTNESS_T, 1), Item::get(Item::REDSTONE, 0, 1), Item::get(Item::POTION, Potion::SWIFTNESS, 1))); //Swiftness Extended
-		$this->registerBrewingRecipe(new BrewingRecipe(Item::get(Item::POTION, Potion::SWIFTNESS_TWO, 1), Item::get(Item::GLOWSTONE_DUST, 0, 1), Item::get(Item::POTION, Potion::SWIFTNESS, 1))); //Swiftness II
-*/
 		//Potion
 		//WATER_BOTTLE
 		$this->registerBrewingRecipe(new BrewingRecipe(Item::get(Item::POTION, Potion::AWKWARD, 1), Item::get(Item::NETHER_WART, 0, 1), Item::get(Item::POTION, Potion::WATER_BOTTLE, 1)));
@@ -894,11 +879,9 @@ class CraftingManager{
 	}
 
 	protected function registerFurnace(){
-		//TODO 修复unll机制   Fix a bug that "NULL" do not working properly
 		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::STONE, 0, 1), Item::get(Item::COBBLESTONE, 0, 1)));
 		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::STONE_BRICK, 2, 1), Item::get(Item::STONE_BRICK, 0, 1)));
 		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::GLASS, 0, 1), Item::get(Item::SAND, null, 1)));
-		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::GLASS, 0, 1), Item::get(Item::SAND, 1, 1)));
 		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::COAL, 1, 1), Item::get(Item::TRUNK, null, 1)));
 		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::COAL, 1, 1), Item::get(Item::TRUNK2, null, 1)));
 		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::GOLD_INGOT, 0, 1), Item::get(Item::GOLD_ORE, 0, 1)));
@@ -920,100 +903,6 @@ class CraftingManager{
 		$this->registerRecipe(new FurnaceRecipe(Item::get(Item::COOKED_MUTTON, 0, 1), Item::get(Item::RAW_MUTTON, 0, 1)));
 		
 		
-	}
-
-	protected function registerStonecutter(){
-		$shapes = [
-			"slab" => [
-				"   ",
-				"XXX",
-				"   "
-			],
-			"stairs" => [
-				"X  ",
-				"XX ",
-				"XXX"
-			],
-			"wall/fence" => [
-				"XXX",
-				"XXX",
-				"   "
-			],
-			"blockrecipe1" => [
-				"XX",
-				"XX"
-			],
-			"blockrecipe2X1" => [
-				"   ",
-				" X ",
-				" X "
-			],
-			"blockrecipe2X2" => [
-				"AB",
-				"BA"
-			],
-			"blockrecipe1X2" => [
-				"  ",
-				"AB"
-			]
-		];
-		$buildRecipes = [];
-		// Single ingedient stone cutter recipes:                
-		$RESULT_ITEMID = 0;
-		$RESULT_META = 1;
-		$INGREDIENT_ITEMID = 2;
-		$INGREDIENT_META = 3;
-		$RECIPE_SHAPE = 4;
-		$RESULT_AMOUNT = 5;
-		$recipes = [
-			//RESULT_ITEM_ID            RESULT_META                 INGREDIENT_ITEMID           INGREDIENT_META     RECIPE_SHAPE        RESULT_AMOUNT
-			[Item::SLAB, Slab::STONE, Item::STONE, Stone::NORMAL, "slab", 6],
-			[Item::SLAB, Slab::COBBLESTONE, Item::COBBLESTONE, 0, "slab", 6],
-			[Item::SLAB, Slab::SANDSTONE, Item::SANDSTONE, 0, "slab", 6],
-			[Item::SLAB, Slab::BRICK, Item::BRICK, 0, "slab", 6],
-			[Item::SLAB, Slab::STONE_BRICK, Item::STONE_BRICK, StoneBricks::NORMAL, "slab", 6],
-			[Item::SLAB, Slab::NETHER_BRICK, Item::NETHER_BRICK_BLOCK, 0, "slab", 6],
-			[Item::SLAB, Slab::QUARTZ, Item::QUARTZ_BLOCK, 0, "slab", 6],
-			[Item::COBBLESTONE_STAIRS, 0, Item::COBBLESTONE, 0, "stairs", 4],
-			[Item::SANDSTONE_STAIRS, 0, Item::SANDSTONE, 0, "stairs", 4],
-			[Item::STONE_BRICK_STAIRS, 0, Item::STONE_BRICK, StoneBricks::NORMAL, "stairs", 4],
-			[Item::BRICK_STAIRS, 0, Item::BRICKS_BLOCK, 0, "stairs", 4],
-			[Item::NETHER_BRICKS_STAIRS, 0, Item::NETHER_BRICK_BLOCK, 0, "stairs", 4],
-			[Item::COBBLESTONE_WALL, StoneWall::NONE_MOSSY_WALL, Item::COBBLESTONE, 0, "wall/fence", 6],
-			[Item::COBBLESTONE_WALL, StoneWall::MOSSY_WALL, Item::MOSSY_STONE, 0, "wall/fence", 6],
-			[Item::NETHER_BRICK_FENCE, 0, Item::NETHER_BRICK_BLOCK, 0, "wall/fence", 6],
-			[Item::NETHER_BRICKS, 0, Item::NETHER_BRICK, 0, "blockrecipe1", 1],
-			[Item::SANDSTONE, Sandstone::NORMAL, Item::SAND, 0, "blockrecipe1", 1],
-			[Item::SANDSTONE, Sandstone::CHISELED, Item::SANDSTONE, Sandstone::NORMAL, "blockrecipe1", 4],
-			[Item::STONE_BRICK, StoneBricks::NORMAL, Item::STONE, Stone::NORMAL, "blockrecipe1", 4],
-			[Item::STONE_BRICK, StoneBricks::NORMAL, Item::STONE, Stone::POLISHED_GRANITE, "blockrecipe1", 4],
-			[Item::STONE_BRICK, StoneBricks::NORMAL, Item::STONE, Stone::POLISHED_DIORITE, "blockrecipe1", 4],
-			[Item::STONE_BRICK, StoneBricks::NORMAL, Item::STONE, Stone::POLISHED_ANDESITE, "blockrecipe1", 4],
-			[Item::STONE, Stone::POLISHED_GRANITE, Item::STONE, Stone::GRANITE, "blockrecipe1", 4],
-			[Item::STONE, Stone::POLISHED_DIORITE, Item::STONE, Stone::DIORITE, "blockrecipe1", 4],
-			[Item::STONE, Stone::POLISHED_ANDESITE, Item::STONE, Stone::ANDESITE, "blockrecipe1", 4],
-			[Item::QUARTZ_BLOCK, Quartz::QUARTZ_NORMAL, Item::QUARTZ, Stone::ANDESITE, "blockrecipe1", 4],
-			[Item::QUARTZ_BLOCK, Quartz::QUARTZ_CHISELED, Item::SLAB, Slab::QUARTZ, "blockrecipe2X1", 1],
-			[Item::SANDSTONE, Sandstone::CHISELED, Item::SLAB, Slab::SANDSTONE, "blockrecipe2X1", 1],
-			[Item::STONE_BRICK, StoneBricks::CHISELED, Item::SLAB, Slab::STONE_BRICK, "blockrecipe2X1", 1],
-		];
-		foreach($recipes as $recipe){
-			$buildRecipes[] = $this->createOneIngedientRecipe($shapes[$recipe[$RECIPE_SHAPE]], $recipe[$RESULT_ITEMID], $recipe[$RESULT_META], $recipe[$RESULT_AMOUNT], $recipe[$INGREDIENT_ITEMID], $recipe[$INGREDIENT_META], "X", "Stonecutter");
-		}
-		// Multi-ingredient stone recipes:
-		$buildRecipes[] = ((new StonecutterShapedRecipe(Item::get(Item::STONE, Stone::GRANITE, 1),
-			...$shapes["blockrecipe1X2"]
-		))->setIngredient("A", Item::get(Item::STONE, Stone::DIORITE, 1))->setIngredient("B", Item::get(Item::QUARTZ, Quartz::QUARTZ_NORMAL, 1)));
-		$buildRecipes[] = ((new StonecutterShapedRecipe(Item::get(Item::STONE, Stone::DIORITE, 2),
-			...$shapes["blockrecipe2X2"]
-		))->setIngredient("A", Item::get(Item::COBBLESTONE, 0, 2))->setIngredient("B", Item::get(Item::QUARTZ, 0, 2)));
-		$buildRecipes[] = ((new StonecutterShapedRecipe(Item::get(Item::STONE, Stone::ANDESITE, 2),
-			...$shapes["blockrecipe1X2"]
-		))->setIngredient("A", Item::get(Item::COBBLESTONE, 0, 1))->setIngredient("B", Item::get(Item::STONE, Stone::DIORITE, 1)));
-		$buildRecipes[] = ((new StonecutterShapedRecipe(Item::get(Item::STONE_BRICK, StoneBricks::MOSSY, 1),
-			...$shapes["blockrecipe1X2"]
-		))->setIngredient("A", Item::get(Item::STONE_BRICK, StoneBricks::NORMAL, 1))->setIngredient("B", Item::get(Item::VINES, 0, 1)));
-		$this->sortAndAddRecipesArray($buildRecipes);
 	}
 
 	private function sortAndAddRecipesArray(&$recipes){

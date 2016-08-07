@@ -44,6 +44,7 @@ class AddPlayerPacket extends DataPacket{
 	public $yaw;
 	public $item;
 	public $metadata;
+	public $client;
 
 	public function decode(){
 
@@ -64,6 +65,7 @@ class AddPlayerPacket extends DataPacket{
 		$this->putFloat($this->yaw); //TODO headrot
 		$this->putFloat($this->pitch);
 		$this->putSlot($this->item);
+		$this->putString($this->client);
 
 		$meta = Binary::writeMetadata($this->metadata);
 		$this->put($meta);

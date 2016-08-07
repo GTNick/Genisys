@@ -34,20 +34,6 @@ class Utils{
 	public static $os;
 	private static $serverUniqueId = null;
 
-	const CIPHER = MCRYPT_RIJNDAEL_256;
-
-	const MODE = MCRYPT_MODE_ECB;
-
-	public static function aes_encode(string $str, string $key) :string{
-		$iv = mcrypt_create_iv(mcrypt_get_iv_size(self::CIPHER, self::MODE), MCRYPT_RAND);
-		return mcrypt_encrypt(self::CIPHER, $key, $str, self::MODE, $iv);
-	}
-
-	public static function aes_decode(string $str, string $key) : string{
-		$iv = mcrypt_create_iv(mcrypt_get_iv_size(self::CIPHER, self::MODE), MCRYPT_RAND);
-		return mcrypt_decrypt(self::CIPHER, $key, $str, self::MODE, $iv);
-	}
-
 	/**
 	 * Generates an unique identifier to a callable
 	 *
@@ -173,9 +159,9 @@ class Utils{
 		}elseif(Utils::$ip !== false and $force !== true){
 			return Utils::$ip;
 		}
-		$ip = trim(strip_tags(Utils::getURL("http://checkip.dyndns.org/")));
-		if(preg_match('#Current IP Address\: ([0-9a-fA-F\:\.]*)#', $ip, $matches) > 0){
-			Utils::$ip = $matches[1];
+		$ip = trim(strip_tags(Utils::getURL("https://api.ipify.org")));
+		if($ip){
+			Utils::$ip = $ip;
 		}else{
 			$ip = Utils::getURL("http://www.checkip.org/");
 			if(preg_match('#">([0-9a-fA-F\:\.]*)</span>#', $ip, $matches) > 0){

@@ -29,23 +29,55 @@ use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\command\SimpleCommandMap;
 use pocketmine\entity\Arrow;
 use pocketmine\entity\Attribute;
+use pocketmine\entity\Bat;
+use pocketmine\entity\Blaze;
+use pocketmine\entity\Boat;
+use pocketmine\entity\CaveSpider;
+use pocketmine\entity\Chicken;
+use pocketmine\entity\Cow;
+use pocketmine\entity\Creeper;
 use pocketmine\entity\Effect;
 use pocketmine\entity\Egg;
+use pocketmine\entity\Enderman;
 use pocketmine\entity\Entity;
 use pocketmine\entity\FallingSand;
 use pocketmine\entity\FishingHook;
+use pocketmine\entity\Ghast;
 use pocketmine\entity\Human;
+use pocketmine\entity\Husk;
+use pocketmine\entity\IronGolem;
 use pocketmine\entity\Item as DroppedItem;
+use pocketmine\entity\LavaSlime;
+use pocketmine\entity\Lightning;
+use pocketmine\entity\Minecart;
 use pocketmine\entity\MinecartChest;
 use pocketmine\entity\MinecartHopper;
 use pocketmine\entity\MinecartTNT;
+use pocketmine\entity\Mooshroom;
+use pocketmine\entity\Ocelot;
+use pocketmine\entity\Painting;
+use pocketmine\entity\Pig;
+use pocketmine\entity\PigZombie;
 use pocketmine\entity\PrimedTNT;
 use pocketmine\entity\Rabbit;
+use pocketmine\entity\Sheep;
+use pocketmine\entity\Silverfish;
+use pocketmine\entity\Skeleton;
+use pocketmine\entity\Slime;
 use pocketmine\entity\Snowball;
+use pocketmine\entity\SnowGolem;
+use pocketmine\entity\Spider;
 use pocketmine\entity\Squid;
+use pocketmine\entity\Stray;
+use pocketmine\entity\ThrownExpBottle;
+use pocketmine\entity\ThrownPotion;
 use pocketmine\entity\Villager;
+use pocketmine\entity\Witch;
+use pocketmine\entity\Wolf;
+use pocketmine\entity\XPOrb;
 use pocketmine\entity\Zombie;
 use pocketmine\entity\ZombieVillager;
+use pocketmine\entity\ai\AIHolder;
 use pocketmine\event\HandlerList;
 use pocketmine\event\level\LevelInitEvent;
 use pocketmine\event\level\LevelLoadEvent;
@@ -73,6 +105,7 @@ use pocketmine\level\generator\Void;
 use pocketmine\level\generator\Generator;
 use pocketmine\level\generator\hell\Nether;
 use pocketmine\level\generator\normal\Normal;
+use pocketmine\level\generator\normal\Normal2;
 use pocketmine\level\Level;
 use pocketmine\metadata\EntityMetadataStore;
 use pocketmine\metadata\LevelMetadataStore;
@@ -106,6 +139,8 @@ use pocketmine\plugin\Plugin;
 use pocketmine\plugin\PluginLoadOrder;
 use pocketmine\plugin\PluginManager;
 use pocketmine\plugin\ScriptPluginLoader;
+use pocketmine\scheduler\CallbackTask;
+use pocketmine\scheduler\DServerTask;
 use pocketmine\scheduler\FileWriteTask;
 use pocketmine\scheduler\SendUsageTask;
 use pocketmine\scheduler\ServerScheduler;
@@ -123,7 +158,6 @@ use pocketmine\tile\MobSpawner;
 use pocketmine\tile\Sign;
 use pocketmine\tile\Skull;
 use pocketmine\tile\Tile;
-use pocketmine\updater\AutoUpdater;
 use pocketmine\utils\Binary;
 use pocketmine\utils\Color;
 use pocketmine\utils\Config;
@@ -136,38 +170,6 @@ use pocketmine\utils\Utils;
 use pocketmine\utils\UUID;
 use pocketmine\utils\VersionString;
 
-use pocketmine\entity\Chicken;
-use pocketmine\entity\Cow;
-use pocketmine\entity\Pig;
-use pocketmine\entity\Sheep;
-use pocketmine\entity\Wolf;
-use pocketmine\entity\Mooshroom;
-use pocketmine\entity\Creeper;
-use pocketmine\entity\Skeleton;
-use pocketmine\entity\Spider;
-use pocketmine\entity\PigZombie;
-use pocketmine\entity\Slime;
-use pocketmine\entity\Enderman;
-use pocketmine\entity\Silverfish;
-use pocketmine\entity\CaveSpider;
-use pocketmine\entity\Ghast;
-use pocketmine\entity\LavaSlime;
-use pocketmine\entity\Bat;
-use pocketmine\entity\Blaze;
-use pocketmine\entity\Ocelot;
-use pocketmine\entity\IronGolem;
-use pocketmine\entity\SnowGolem;
-use pocketmine\entity\Lightning;
-use pocketmine\entity\XPOrb;
-use pocketmine\entity\ai\AIHolder;
-use pocketmine\entity\ThrownExpBottle;
-use pocketmine\entity\Boat;
-use pocketmine\entity\Minecart;
-use pocketmine\entity\ThrownPotion;
-use pocketmine\entity\Painting;
-use pocketmine\entity\Husk;
-use pocketmine\scheduler\DServerTask;
-use pocketmine\scheduler\CallbackTask;
 use synapse\Synapse;
 
 /**
@@ -211,9 +213,6 @@ class Server{
 	private $pluginManager = null;
 
 	private $profilingTickRate = 20;
-
-	/** @var AutoUpdater */
-	private $updater = null;
 
 	/** @var ServerScheduler */
 	private $scheduler = null;
@@ -327,7 +326,7 @@ class Server{
 	/** @var Level */
 	private $levelDefault = null;
 
-	public $aboutstring = "";
+	private $aboutContent = "";
 
 	/** Advanced Config */
 	public $advancedConfig = null;
@@ -360,7 +359,7 @@ class Server{
 	public $dserverAllPlayers = 0;
 	public $redstoneEnabled = false;
 	public $allowFrequencyPulse = true;
-	public $anviletEnabled = false;
+	public $anvilEnabled = false;
 	public $pulseFrequency = 20;
 	public $playerMsgType = self::PLAYER_MSG_TYPE_MESSAGE;
 	public $playerLoginMsg = "";
@@ -379,6 +378,8 @@ class Server{
 	public $fireSpread = false;
 	public $advancedCommandSelector = false;
 	public $synapseConfig = [];
+	public $enchantingTableEnabled = true;
+	public $countBookshelf = false;
 
 	/** @var CraftingDataPacket */
 	private $recipeList = null;
@@ -437,6 +438,10 @@ class Server{
 	 */
 	public function getPocketMineVersion(){
 		return \pocketmine\VERSION;
+	}
+	
+	public function getFormattedVersion($prefix = ""){
+		return (\pocketmine\VERSION !== ""? $prefix . \pocketmine\VERSION : "");
 	}
 
 	/**
@@ -750,13 +755,6 @@ class Server{
 	}
 
 	/**
-	 * @return AutoUpdater
-	 */
-	public function getUpdater(){
-		return $this->updater;
-	}
-
-	/**
 	 * @return PluginManager
 	 */
 	public function getPluginManager(){
@@ -974,7 +972,7 @@ class Server{
 		$nbt->Motion->setTagType(NBT::TAG_Double);
 		$nbt->Rotation->setTagType(NBT::TAG_Float);
 
-		if(file_exists($path . "$name.yml")){ //Importing old PocketMine-MP files
+		/*if(file_exists($path . "$name.yml")){ //Importing old PocketMine-MP files
 			$data = new Config($path . "$name.yml", Config::YAML, []);
 			$nbt["playerGameType"] = (int) $data->get("gamemode");
 			$nbt["Level"] = $data->get("position")["level"];
@@ -1023,7 +1021,7 @@ class Server{
 				$nbt->Achievements[$achievement] = new ByteTag($achievement, $status == true ? 1 : 0);
 			}
 			unlink($path . "$name.yml");
-		}
+		}*/
 		$this->saveOfflinePlayerData($name, $nbt);
 
 		return $nbt;
@@ -1299,8 +1297,8 @@ class Server{
 			$generator = Generator::getGenerator($this->getLevelType());
 		}
 
-		if(($provider = LevelProviderManager::getProviderByName($providerName = $this->getProperty("level-settings.default-format", "mcregion"))) === null){
-			$provider = LevelProviderManager::getProviderByName($providerName = "mcregion");
+		if(($provider = LevelProviderManager::getProviderByName($providerName = $this->getProperty("level-settings.default-format", "anvil"))) === null){
+			$provider = LevelProviderManager::getProviderByName($providerName = "anvil");
 		}
 
 		try{
@@ -1642,7 +1640,15 @@ class Server{
 	}
 
 	public function about(){
-		$this->logger->info($this->aboutstring);
+		$string = '
+
+	§3Genisys§f is a fork of §bPocketMine-MP§f, made by §5iTX Technologies LLC§f
+	Version: §6' . $this->getPocketMineVersion() . '§f
+	Target client version: §b' . \pocketmine\MINECRAFT_VERSION . '§f
+	Source code: §dhttps://github.com/iTXTech/Genisys§f
+	';
+	
+		$this->getLogger()->info($string);
 	}
 
 	public function loadAdvancedConfig(){
@@ -1699,7 +1705,6 @@ class Server{
 		$this->redstoneEnabled = $this->getAdvancedProperty("redstone.enable", false);
 		$this->allowFrequencyPulse = $this->getAdvancedProperty("redstone.allow-frequency-pulse", false);
 		$this->pulseFrequency = $this->getAdvancedProperty("redstone.pulse-frequency", 20);
-		$this->anviletEnabled = $this->getAdvancedProperty("server.allow-anvilandenchanttable", true);
 		$this->getLogger()->setWrite(!$this->getAdvancedProperty("server.disable-log", false));
 		$this->antiFly = $this->getAdvancedProperty("server.anti-fly", true);
 		$this->asyncChunkRequest = $this->getAdvancedProperty("server.async-chunk-request", true);
@@ -1722,6 +1727,9 @@ class Server{
 			"description" => $this->getAdvancedProperty("synapse.description", "A Synapse client"),
 			"disable-rak" => $this->getAdvancedProperty("synapse.disable-rak", false),
 		];
+		$this->anvilEnabled = $this->getAdvancedProperty("enchantment.enable-anvil", true);
+		$this->enchantingTableEnabled = $this->getAdvancedProperty("enchantment.enable-enchanting-table", true);
+		$this->countBookshelf = $this->getAdvancedProperty("enchantment.count-bookshelf", false);
 	}
 
 	public function isSynapseEnabled() : bool {
@@ -1807,27 +1815,24 @@ class Server{
 			$version = new VersionString($this->getPocketMineVersion());
 			$this->version = $version;
 
-
-			$this->aboutstring = "\n
-		   §5PocketMine-iTX §3Genisys §fis a fork of PocketMine-MP, made by §5iTX Technologies LLC§f.
-		   §fVersion: §6" . $this->getPocketMineVersion() . "
-		   §fTarget client Version: §d" . \pocketmine\MINECRAFT_VERSION . "
-		   §fLatest source code is available at https://github.com/iTXTech/Genisys
-		   §fDonate link: http://pl.zxda.net/plugins/203.html
-		\n";
-
 			$this->about();
 
 			$this->logger->info("Loading pocketmine.yml...");
 			if(!file_exists($this->dataPath . "pocketmine.yml")){
 				$content = file_get_contents($this->filePath . "src/pocketmine/resources/pocketmine.yml");
-				if($version->isDev()){
-					$content = str_replace("preferred-channel: stable", "preferred-channel: beta", $content);
-				}
 				@file_put_contents($this->dataPath . "pocketmine.yml", $content);
 			}
 			$this->config = new Config($configPath = $this->dataPath . "pocketmine.yml", Config::YAML, []);
 			$nowLang = $this->getProperty("settings.language", "eng");
+			
+			//Crashes unsupported builds without the correct configuration
+			if(strpos(\pocketmine\VERSION, "unsupported") !== false and getenv("GITLAB_CI") === false){
+				if($this->getProperty("settings.enable-testing", false) !== true){
+					throw new ServerException("This build is not intended for production use. You may set 'settings.enable-testing: true' under pocketmine.yml to allow use of non-production builds. Do so at your own risk and ONLY if you know what you are doing.");
+				}else{
+					$this->logger->warning("You are using an unsupported build. Do not use this build in a production environment.");
+				}
+			}
 			if($defaultLang != "unknown" and $nowLang != $defaultLang){
 				@file_put_contents($configPath, str_replace('language: "' . $nowLang . '"', 'language: "' . $defaultLang . '"', file_get_contents($configPath)));
 				$this->config->reload();
@@ -1888,8 +1893,6 @@ class Server{
 			$this->logger->info($this->getLanguage()->translateString("language.selected", [$this->getLanguage()->getName(), $this->getLanguage()->getLang()]));
 
 			$this->memoryManager = new MemoryManager($this);
-
-			$this->logger->info($this->getLanguage()->translateString("pocketmine.server.start", [TextFormat::AQUA . $this->getVersion(). TextFormat::WHITE]));
 
 			if(($poolSize = $this->getProperty("settings.async-workers", "auto")) === "auto"){
 				$poolSize = ServerScheduler::$WORKERS;
@@ -1966,13 +1969,6 @@ class Server{
 			$this->network = new Network($this);
 			$this->network->setName($this->getMotd());
 
-
-			$this->logger->info($this->getLanguage()->translateString("pocketmine.server.info", [
-				$this->getName(),
-				$this->getPocketMineVersion(),
-				$this->getCodename(),
-				$this->getApiVersion()
-			]));
 			$this->logger->info($this->getLanguage()->translateString("pocketmine.server.license", [$this->getName()]));
 
 			Timings::init();
@@ -1985,10 +1981,10 @@ class Server{
 
 			InventoryType::init($this->inventoryNum);
 			Block::init();
+			Enchantment::init();
 			Item::init($this->creativeItemsFromJson);
 			Biome::init();
 			Effect::init();
-			Enchantment::init();
 			Attribute::init();
 			EnchantmentLevelTable::init();
 			Color::init();
@@ -2016,8 +2012,6 @@ class Server{
 
 			$this->pluginManager->loadPlugins($this->pluginPath);
 
-			$this->updater = new AutoUpdater($this, $this->getProperty("auto-updater.host", "www.pocketmine.net"));
-
 			$this->enablePlugins(PluginLoadOrder::STARTUP);
 
 			LevelProviderManager::addProvider($this, Anvil::class);
@@ -2034,6 +2028,7 @@ class Server{
 			Generator::addGenerator(Nether::class, "hell");
 			Generator::addGenerator(Nether::class, "nether");
 			Generator::addGenerator(Void::class, "void");
+			Generator::addGenerator(Normal2::class, "normal2");
 
 			foreach((array) $this->getProperty("worlds", []) as $name => $worldSetting){
 				if($this->loadLevel($name) === false){
@@ -2868,9 +2863,8 @@ class Server{
 
 		$u = Utils::getMemoryUsage(true);
 		$usage = round(($u[0] / 1024) / 1024, 2) . "/" . round(($d[0] / 1024) / 1024, 2) . "/" . round(($u[1] / 1024) / 1024, 2) . "/" . round(($u[2] / 1024) / 1024, 2) . " MB @ " . Utils::getThreadCount() . " threads";
-
-		echo "\x1b]0;" . $this->getName() . " " .
-			$this->getGameVersion() . "-#" . $this->getBuild() .
+		
+		echo "\x1b]0;" . $this->getName() . $this->getFormattedVersion("-") .
 			" | Online " . count($this->players) . "/" . $this->getMaxPlayers() .
 			" | Memory " . $usage .
 			" | U " . round($this->network->getUpload() / 1024, 2) .
@@ -3054,50 +3048,52 @@ class Server{
 
 	private function registerEntities(){
 		Entity::registerEntity(Arrow::class);
-		Entity::registerEntity(DroppedItem::class);
-		Entity::registerEntity(FallingSand::class);
-		Entity::registerEntity(PrimedTNT::class);
-		Entity::registerEntity(Snowball::class);
-		Entity::registerEntity(Villager::class);
-		Entity::registerEntity(Zombie::class);
-		Entity::registerEntity(Squid::class);
-		Entity::registerEntity(Chicken::class);
-		Entity::registerEntity(Cow::class);
-		Entity::registerEntity(Pig::class);
-		Entity::registerEntity(Sheep::class);
-		Entity::registerEntity(Wolf::class);
-		Entity::registerEntity(Mooshroom::class);
-		Entity::registerEntity(Creeper::class);
-		Entity::registerEntity(Skeleton::class);
-		Entity::registerEntity(Spider::class);
-		Entity::registerEntity(PigZombie::class);
-		Entity::registerEntity(Slime::class);
-		Entity::registerEntity(Enderman::class);
-		Entity::registerEntity(Silverfish::class);
-		Entity::registerEntity(CaveSpider::class);
-		Entity::registerEntity(Ghast::class);
-		Entity::registerEntity(LavaSlime::class);
 		Entity::registerEntity(Bat::class);
 		Entity::registerEntity(Blaze::class);
-		Entity::registerEntity(Ocelot::class);
-		Entity::registerEntity(SnowGolem::class);
-		Entity::registerEntity(IronGolem::class);
-		Entity::registerEntity(Lightning::class);
-		Entity::registerEntity(XPOrb::class);
-		Entity::registerEntity(ThrownExpBottle::class);
 		Entity::registerEntity(Boat::class);
-		Entity::registerEntity(Minecart::class);
-		Entity::registerEntity(ThrownPotion::class);
-		Entity::registerEntity(Painting::class);
-		Entity::registerEntity(FishingHook::class);
+		Entity::registerEntity(CaveSpider::class);
+		Entity::registerEntity(Chicken::class);
+		Entity::registerEntity(Cow::class);
+		Entity::registerEntity(Creeper::class);
+		Entity::registerEntity(DroppedItem::class);
 		Entity::registerEntity(Egg::class);
-		Entity::registerEntity(ZombieVillager::class);
-		Entity::registerEntity(Rabbit::class);
+		Entity::registerEntity(Enderman::class);
+		Entity::registerEntity(FallingSand::class);
+		Entity::registerEntity(FishingHook::class);
+		Entity::registerEntity(Ghast::class);
+		Entity::registerEntity(Husk::class);
+		Entity::registerEntity(IronGolem::class);
+		Entity::registerEntity(LavaSlime::class); //Magma Cube
+		Entity::registerEntity(Lightning::class);
+		Entity::registerEntity(Minecart::class);
 		Entity::registerEntity(MinecartChest::class);
 		Entity::registerEntity(MinecartHopper::class);
 		Entity::registerEntity(MinecartTNT::class);
-		Entity::registerEntity(Husk::class);
-
+		Entity::registerEntity(Mooshroom::class);
+		Entity::registerEntity(Ocelot::class);
+		Entity::registerEntity(Painting::class);
+		Entity::registerEntity(Pig::class);
+		Entity::registerEntity(PigZombie::class);
+		Entity::registerEntity(PrimedTNT::class);
+		Entity::registerEntity(Rabbit::class);
+		Entity::registerEntity(Sheep::class);
+		Entity::registerEntity(Silverfish::class);
+		Entity::registerEntity(Skeleton::class);
+		Entity::registerEntity(Slime::class);
+		Entity::registerEntity(Snowball::class);
+		Entity::registerEntity(SnowGolem::class);
+		Entity::registerEntity(Spider::class);
+		Entity::registerEntity(Squid::class);
+		Entity::registerEntity(Stray::class);
+		Entity::registerEntity(ThrownExpBottle::class);
+		Entity::registerEntity(ThrownPotion::class);
+		Entity::registerEntity(Villager::class);
+		Entity::registerEntity(Witch::class);
+		Entity::registerEntity(Wolf::class);
+		Entity::registerEntity(XPOrb::class);
+		Entity::registerEntity(Zombie::class);
+		Entity::registerEntity(ZombieVillager::class);
+		
 		Entity::registerEntity(Human::class, true);
 	}
 

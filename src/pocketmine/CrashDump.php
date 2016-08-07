@@ -31,7 +31,14 @@ class CrashDump{
 		$this->data["time"] = $this->time;
 		$this->addLine($this->server->getName() . " Crash Dump " . date("D M j H:i:s T Y", $this->time));
 		$this->addLine();
-		$this->baseCrash();
+		try{
+			$this->baseCrash();
+		}catch(\Exception $e){
+			//Attempt to fix incomplete crashdumps
+			$this->addLine("CrashDump crashed while generating base crash data");
+			$this->addLine();
+		}
+		
 		$this->generalData();
 		$this->pluginsData();
 
@@ -160,10 +167,9 @@ class CrashDump{
 		$this->addLine("Line: " . $error["line"]);
 		$this->addLine("Type: " . $error["type"]);
 		
-		if(strpos($error["file"], "src/pocketmine/") === false and strpos($error["file"], "src/raklib/") === false and file_exists($error["fullFile"])){
+		if(strpos($error["file"], "src/pocketmine/") === false and strpos($error["file"], "src/raklib/") === false and strpos($error["file"], "src/synapse/") === false and file_exists($error["fullFile"])){
 			$this->addLine();
 			$this->addLine("THIS CRASH WAS CAUSED BY A PLUGIN");
-			$this->addLine("此次出错由插件引起");
 			$this->data["plugin"] = true;
 
 			$reflection = new \ReflectionClass(PluginBase::class);
@@ -204,8 +210,6 @@ class CrashDump{
 	private function generalData(){
 		$version = new VersionString();
 		$this->data["general"] = [];
-		$this->data["general"]["version"] = $version->get(false);
-		$this->data["general"]["build"] = $version->getBuild();
 		$this->data["general"]["protocol"] = Info::CURRENT_PROTOCOL;
 		$this->data["general"]["api"] = \pocketmine\API_VERSION;
 		$this->data["general"]["git"] = \pocketmine\GIT_COMMIT;
@@ -215,7 +219,7 @@ class CrashDump{
 		$this->data["general"]["zend"] = zend_version();
 		$this->data["general"]["php_os"] = PHP_OS;
 		$this->data["general"]["os"] = Utils::getOS();
-		$this->addLine("Genisys version: " . $version->get(false) . " #" . $version->getBuild() . " [Protocol " . Info::CURRENT_PROTOCOL . "; API " . API_VERSION . "]");
+		$this->addLine("Genisys version: " . \pocketmine\GIT_COMMIT . " [Protocol " . Info::CURRENT_PROTOCOL . "; API " . API_VERSION . "]");
 		$this->addLine("uname -a: " . php_uname("a"));
 		$this->addLine("PHP version: " . phpversion());
 		$this->addLine("Zend version: " . zend_version());

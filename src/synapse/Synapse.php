@@ -24,6 +24,7 @@ namespace synapse;
 use pocketmine\Server;
 use pocketmine\utils\MainLogger;
 use pocketmine\utils\Utils;
+use synapse\network\protocol\spp\BroadcastPacket;
 use synapse\network\protocol\spp\ConnectPacket;
 use synapse\network\protocol\spp\DataPacket;
 use synapse\network\protocol\spp\DisconnectPacket;
@@ -65,6 +66,7 @@ class Synapse{
 		]
 	 */
 	private $description;
+	private $connectionTime = PHP_INT_MAX;
 
 	public function __construct(Server $server, array $config){
 		self::$obj = $this;
@@ -123,12 +125,13 @@ class Synapse{
 	public function connect(){
 		$this->verified = false;
 		$pk = new ConnectPacket();
-		$pk->encodedPassword = base64_encode(Utils::aes_encode($this->password, $this->password));
+		$pk->password = $this->password;
 		$pk->isMainServer = $this->isMainServer();
 		$pk->description = $this->description;
 		$pk->maxPlayers = $this->server->getMaxPlayers();
 		$pk->protocol = Info::CURRENT_PROTOCOL;
 		$this->sendDataPacket($pk);
+		$this->connectionTime = microtime(true);
 	}
 
 	public function tick(){
@@ -144,6 +147,9 @@ class Synapse{
 		if(((($time = microtime(true)) - $this->lastUpdate) >= 30) and $this->interface->isConnected()){//30 seconds timeout
 			$this->interface->reconnect();
 		}
+		if(microtime(true) - $this->connectionTime >= 15 and !$this->verified){
+			$this->interface->reconnect();
+		}
 	}
 
 	public function getServerIp() : string{
@@ -157,6 +163,17 @@ class Synapse{
 	public function isMainServer() : bool{
 		return $this->isMainServer;
 	}
+
+ 	public function broadcastPacket(array $players, DataPacket $packet, $direct = false){
+ 		$packet->encode();
+		$pk = new BroadcastPacket();
+ 		$pk->direct = $direct;
+		$pk->payload = $packet->getBuffer();
+ 		foreach($players as $player){
+			$pk->entries[] = $player->getUniqueId();
+ 		}
+ 		$this->sendDataPacket($pk);
+ 	}
 
 	public function getLogger(){
 		return $this->logger;
@@ -190,6 +207,19 @@ class Synapse{
 	public function handleDataPacket(DataPacket $pk){
 		$this->logger->debug("Received packet " . $pk::NETWORK_ID . " from {$this->serverIp}:{$this->port}");
 		switch($pk::NETWORK_ID){
+			case Info::DISCONNECT_PACKET:
+				/** @var DisconnectPacket $pk */
+				$this->verified = false;
+				switch($pk->type){
+					case DisconnectPacket::TYPE_GENERIC:
+						$this->getLogger()->notice("Synapse Client has disconnected due to " . $pk->message);
+						$this->interface->reconnect();
+						break;
+					case DisconnectPacket::TYPE_WRONG_PROTOCOL:
+						$this->getLogger()->error($pk->message);
+						break;
+				}
+				break;
 			case Info::INFORMATION_PACKET:
 				/** @var InformationPacket $pk */
 				switch($pk->type){
@@ -202,11 +232,10 @@ class Synapse{
 						}
 					break;
 					case InformationPacket::TYPE_CLIENT_DATA:
-						$this->clientData = json_decode($pk->message, true);
+						$this->clientData = json_decode($pk->message, true)["clientList"];
 						$this->lastRecvInfo = microtime();
 						break;
 				}
-
 				break;
 			case Info::PLAYER_LOGIN_PACKET:
 				/** @var PlayerLoginPacket $pk */
@@ -220,14 +249,16 @@ class Synapse{
 				/** @var RedirectPacket $pk */
 				if(isset($this->players[$uuid = $pk->uuid->toBinary()])){
 					$pk = $this->getPacket($pk->mcpeBuffer);
-					$pk->decode();
-					$this->players[$uuid]->handleDataPacket($pk);
+					if($pk != null){//drop unknown packet
+						$pk->decode();
+						$this->players[$uuid]->handleDataPacket($pk);
+					}
 				}
 				break;
 			case Info::PLAYER_LOGOUT_PACKET:
 				/** @var PlayerLogoutPacket $pk */
 				if(isset($this->players[$uuid = $pk->uuid->toBinary()])){
-					$this->players[$uuid]->close("", $pk->reason);
+					$this->players[$uuid]->close("", $pk->reason, false);
 					$this->removePlayer($this->players[$uuid]);
 				}
 				break;
